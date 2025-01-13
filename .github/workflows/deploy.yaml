@@ -1,0 +1,58 @@
+name: Deploy Web Server
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REGION: us-east-1
+  APP_NAME: WebServerApp
+  DEPLOYMENT_GROUP: WebServerGroup
+  BUCKET_NAME: my-codedeploy-bucket
+  S3_KEY: latest-deployment.zip
+  INSTANCE_PROFILE: CodeDeployInstanceProfile
+  LAUNCH_TEMPLATE_NAME: WebServerTemplate
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.REGION }}
+
+    - name: Create AMI with new web page
+      run: |
+        INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=WebServerInstance" --query "Reservations[0].Instances[0].InstanceId" --output text)
+        AMI_ID=$(aws ec2 create-image --instance-id $INSTANCE_ID --name "WebServerAMI-$(date +%s)" --output text --query 'ImageId')
+        echo "AMI_ID=$AMI_ID" >> $GITHUB_ENV
+
+    - name: Update Launch Template
+      run: |
+        aws ec2 create-launch-template-version \
+          --launch-template-name ${{ env.LAUNCH_TEMPLATE_NAME }} \
+          --version-description "Updated for new deployment" \
+          --source-version 1 \
+          --launch-template-data "{
+            \"ImageId\": \"${{ env.AMI_ID }}\"
+          }"
+
+    - name: Package application
+      run: |
+        zip -r deployment-package.zip index.html appspec.yml scripts/
+        aws s3 cp deployment-package.zip s3://${{ env.BUCKET_NAME }}/${{ env.S3_KEY }}
+
+    - name: Deploy using CodeDeploy
+      run: |
+        aws deploy create-deployment \
+          --application-name ${{ env.APP_NAME }} \
+          --deployment-group-name ${{ env.DEPLOYMENT_GROUP }} \
+          --s3-location bucket=${{ env.BUCKET_NAME }},key=${{ env.S3_KEY }},bundleType=zip

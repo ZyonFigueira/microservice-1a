@@ -1,1 +1,0 @@
- build/web/favicon.png build/web/icons/Icon-192.png build/web/icons/Icon-maskable-192.png build/web/icons/Icon-maskable-512.png build/web/icons/Icon-512.png build/web/manifest.json:  /app/web/index.html /app/web/favicon.png /app/web/icons/Icon-192.png /app/web/icons/Icon-maskable-192.png /app/web/icons/Icon-maskable-512.png /app/web/icons/Icon-512.png /app/web/manifest.json
