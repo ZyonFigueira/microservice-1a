@@ -29,6 +29,5 @@ jobs:
       - name: Upload ZIP to S3
         run: |
           aws s3 cp artifacts/build-${{ github.run_number }}.zip s3://730335198243-deployment/artifacts/build-${{ github.run_number }}.zip
-          aws s3 cp artifacts/build-${{ github.run_number }}.zip s3://730335198243-deployment/artifacts/latest.zip
         env:
           AWS_DEFAULT_REGION: sa-east-1
