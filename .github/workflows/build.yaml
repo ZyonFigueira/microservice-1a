@@ -16,6 +16,7 @@ jobs:
 
       - name: Create ZIP archive with Build Number
         run: |
+          pwd
           mkdir -p artifacts
           zip -r artifacts/build-${{ github.run_number }}.zip ./*
 
