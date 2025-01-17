@@ -16,9 +16,8 @@ jobs:
 
       - name: Create ZIP archive with Build Number
         run: |
-          cd ..
-          mkdir -p artifacts
-          zip -r artifacts/build-${{ github.run_number }}.zip ./microservice-1a/*
+          mkdir -p ../artifacts
+          zip -r ../artifacts/build-${{ github.run_number }}.zip ./microservice-1a/*
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -29,6 +28,6 @@ jobs:
 
       - name: Upload ZIP to S3
         run: |
-          aws s3 cp artifacts/build-${{ github.run_number }}.zip s3://730335198243-deployment/artifacts/build-${{ github.run_number }}.zip
+          aws s3 cp ../artifacts/build-${{ github.run_number }}.zip s3://730335198243-deployment/artifacts/build-${{ github.run_number }}.zip
         env:
           AWS_DEFAULT_REGION: sa-east-1
