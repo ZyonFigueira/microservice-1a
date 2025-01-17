@@ -16,9 +16,9 @@ jobs:
 
       - name: Create ZIP archive with Build Number
         run: |
-          pwd
+          cd ..
           mkdir -p artifacts
-          zip -r artifacts/build-${{ github.run_number }}.zip ./*
+          zip -r artifacts/build-${{ github.run_number }}.zip ./microservice-1a/*
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
