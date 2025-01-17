@@ -1,33 +1,39 @@
-name: webapp-build
+name: Deploy to EC2 using CodeDeploy
 
 on:
   push:
     branches:
       - main
-  workflow_dispatch: #Manual Build
+  workflow_dispatch: # Enables manual triggering of the workflow
+
 
 jobs:
   deploy:
+    name: Deploy to EC2
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout Code
+      uses: actions/checkout@v3
 
-      - name: Create ZIP archive with Build Number
-        run: |
-          mkdir -p ../artifacts
-          zip -r ../artifacts/build-${{ github.run_number }}.zip ./microservice-1a/*
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: sa-east-1
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: sa-east-1
+    - name: Package Code
+      run: |
+        zip -r deployment.zip index.html appspec.yml scripts/
 
-      - name: Upload ZIP to S3
-        run: |
-          aws s3 cp ../artifacts/build-${{ github.run_number }}.zip s3://730335198243-deployment/artifacts/build-${{ github.run_number }}.zip
-        env:
-          AWS_DEFAULT_REGION: sa-east-1
+    - name: Upload to S3
+      run: |
+        aws s3 cp deployment.zip s3://730335198243-deployment/deployment.zip
+
+    - name: Trigger CodeDeploy Deployment
+      run: |
+        aws deploy create-deployment \
+          --application-name my-codedeploy-app \
+          --deployment-group-name my-deployment-group \
+          --s3-location bucket=730335198243-deployment,key=deployment.zip,bundleType=zip
