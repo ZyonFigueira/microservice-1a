@@ -1,39 +1,61 @@
-name: Deploy to EC2 using CodeDeploy
+name: deploy-hml
 
 on:
   push:
     branches:
-      - main
-  workflow_dispatch: # Enables manual triggering of the workflow
-
+      - main 
 
 jobs:
-  deploy:
-    name: Deploy to EC2
+  build_and_deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+    # Checkout the repository
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v2
+    # Set up AWS CLI
+    - name: Set up AWS CLI
+      uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: sa-east-1
+        aws-region: us-east-1  # Adjust the region as needed
 
-    - name: Package Code
-      run: |
-        zip -r deployment.zip index.php appspec.yml scripts/
+    # Set up Terraform
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: "1.2.5"  # You can set a specific version
 
-    - name: Upload to S3
+    # Build Docker image and push to AWS ECR
+    - name: Build and push Docker image to ECR
+      env:
+        AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+        ECR_REPO_NAME: my-php-web-server
+        AWS_REGION: us-east-1
       run: |
-        aws s3 cp deployment.zip s3://730335198243-deployment/deployment.zip
+        # Authenticate Docker to AWS ECR
+        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
-    - name: Trigger CodeDeploy Deployment
-      run: |
-        aws deploy create-deployment \
-          --application-name my-codedeploy-app \
-          --deployment-group-name my-deployment-group \
-          --s3-location bucket=730335198243-deployment,key=deployment.zip,bundleType=zip
+        # Build Docker image
+        docker build -t $ECR_REPO_NAME .
+
+        # Tag the Docker image
+        docker tag $ECR_REPO_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:latest
+
+        # Push the Docker image to ECR
+        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:latest
+
+    # # Deploy using Terraform
+    # - name: Initialize Terraform
+    #   run: terraform init
+
+    # - name: Apply Terraform
+    #   run: terraform apply -auto-approve
+
+    # # Clean up Docker images after deployment (optional)
+    # - name: Clean up Docker images
+    #   run: |
+    #     docker rmi $ECR_REPO_NAME:latest
+    #     docker rmi $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:latest
