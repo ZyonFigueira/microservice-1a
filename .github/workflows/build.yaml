@@ -31,21 +31,20 @@ jobs:
     # Build Docker image and push to AWS ECR
     - name: Build and push Docker image to ECR
       env:
-        AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-        ECR_REPO_NAME: my-php-web-server
+        ECR_REPO_NAME: 879381271270.dkr.ecr.us-east-1.amazonaws.com/bff-gateway
         AWS_REGION: us-east-1
       run: |
         # Authenticate Docker to AWS ECR
-        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_REPO_NAME
 
         # Build Docker image
         docker build -t $ECR_REPO_NAME .
 
         # Tag the Docker image
-        docker tag $ECR_REPO_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:latest
+        docker tag $ECR_REPO_NAME:latest $ECR_REPO_NAME/$ECR_REPO_NAME:latest
 
         # Push the Docker image to ECR
-        docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:latest
+        docker push $ECR_REPO_NAME/$ECR_REPO_NAME:latest
 
     # # Deploy using Terraform
     # - name: Initialize Terraform
@@ -58,4 +57,4 @@ jobs:
     # - name: Clean up Docker images
     #   run: |
     #     docker rmi $ECR_REPO_NAME:latest
-    #     docker rmi $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:latest
+    #     docker rmi $ECR_REPO_NAME/$ECR_REPO_NAME:latest
