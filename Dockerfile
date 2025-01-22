@@ -1,6 +1,6 @@
 # Use Ubuntu 20.04 as the base image
 FROM ubuntu:20.04
-
+ENV DEBIAN_FRONTEND=noninteractive
 # Update and install necessary packages (Apache, PHP, and others)
 RUN apt update && apt install -y \
     apache2 \
