@@ -54,12 +54,14 @@ jobs:
         AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         ECR_REPO_NAME: bff-gateway
         AWS_REGION: us-east-1
+        BUILD_ID: ${{ github.run_id }}
       run: |
         aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
         docker buildx build \
         --platform linux/arm64 \
         -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:$BUILD_ID \
         --push .
+
 
     - name: Initialize Terraform
       run: terraform init
