@@ -46,10 +46,10 @@ jobs:
     - name: Apply Terraform
       run: terraform plan
 
-    - name: Pause for Manual Approval
-      uses: chrnorm/deploy-pause@v2
-      with:
-        step-name: "Approve Terraform Plan"
+    # - name: Pause for Manual Approval
+    #   uses: chrnorm/deploy-pause@v2
+    #   with:
+    #     step-name: "Approve Terraform Plan"
 
     - name: Apply Terraform
       run: terraform apply -var "image_uri=879381271270.dkr.ecr.us-east-1.amazonaws.com/bff-gateway:latest"
