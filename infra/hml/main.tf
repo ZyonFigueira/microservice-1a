@@ -1,15 +1,24 @@
+locals {
+  microservice_name = "bff-gateway"
+  cluster_name = "mygateway-cluster-hml"
+  desired_count = 1
+  container_port = 80
+  cpu = 256
+  memory = 512
+}
+
 module "ecs_service" {
   source  = "terraform-aws-modules/ecs/aws//modules/service"
   version = "~> 5.6"
-  name          = var.microservice_name
+  name          = local.microservice_name
 
   runtime_platform = {
     cpu_architecture        = "ARM64"
     operating_system_family = "LINUX"
   }
 
-  cpu       = var.cpu
-  memory    = var.memory
+  cpu       = local.cpu
+  memory    = local.memory
   
   desired_count = 1
   enable_autoscaling = false
@@ -18,7 +27,7 @@ module "ecs_service" {
   enable_execute_command = true
 
   container_definitions = {
-    (var.microservice_name) = {
+    (local.microservice_name) = {
 
       image                    = var.image_uri
       readonly_root_filesystem = false
@@ -27,7 +36,7 @@ module "ecs_service" {
       port_mappings = [
         {
           protocol      = "tcp",
-          containerPort = var.container_port
+          containerPort = local.container_port
         }
       ]
     }
@@ -36,8 +45,8 @@ module "ecs_service" {
   load_balancer = {
     service = {
       target_group_arn = module.alb.target_groups["ecs-task"].arn
-      container_name   = var.microservice_name
-      container_port   = var.container_port
+      container_name   = local.microservice_name
+      container_port   = local.container_port
     }
   }
 
@@ -45,8 +54,8 @@ module "ecs_service" {
   security_group_rules = {
     ingress_alb_service = {
       type                     = "ingress"
-      from_port                = var.container_port
-      to_port                  = var.container_port
+      from_port                = local.container_port
+      to_port                  = local.container_port
       protocol                 = "tcp"
       description              = "Service port"
       source_security_group_id = module.alb.security_group_id
@@ -66,7 +75,7 @@ module "alb" {
   source  = "terraform-aws-modules/alb/aws"
   version = "~> 9.0"
 
-  name = var.microservice_name
+  name = local.microservice_name
 
   # For example only
   enable_deletion_protection = false
@@ -104,7 +113,7 @@ module "alb" {
   target_groups = {
     ecs-task = {
       backend_protocol = "HTTP"
-      backend_port     = var.container_port
+      backend_port     = local.container_port
       target_type      = "ip"
 
       health_check = {
@@ -150,5 +159,5 @@ data "aws_subnet" "private_cidr" {
 }
 
 data "aws_ecs_cluster" "mygateway_cluster" {
-  cluster_name = var.cluster_name
+  cluster_name = local.cluster_name
 }
