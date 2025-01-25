@@ -56,7 +56,7 @@ jobs:
         AWS_REGION: us-east-1
       run: |
         aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-        docker buildx build --platform linux/arm64-t $ECR_REPO_NAME .
+        docker buildx build --platform linux/arm64 -t $ECR_REPO_NAME .
         docker tag $ECR_REPO_NAME:$BUILD_ID $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:$BUILD_ID
         docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:$BUILD_ID
 
