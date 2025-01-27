@@ -75,4 +75,4 @@ jobs:
         run: cd infra/hml && terraform init
 
       - name: Terraform Apply
-        run: terraform apply -var "image_uri=879381271270.dkr.ecr.us-east-1.amazonaws.com/bff-gateway:latest"
+        run: cd infra/hml && terraform apply -var "image_uri=879381271270.dkr.ecr.us-east-1.amazonaws.com/bff-gateway:latest"
